@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👤 Drawfy - Мой профиль</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style_local.css">
+    <style>
+        /* Стили для профиля */
+        .profile-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            position: relative;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: white;
+            border: 5px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .profile-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .profile-level {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 25px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .progress-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 25px 0;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        
+        .progress-bar {
+            height: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ed573, #1dd1a1);
+            border-radius: 10px;
+            transition: width 1s ease;
+            position: relative;
+        }
+        
+        .progress-text {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7em;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .profile-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: white;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .my-drawings {
+            margin-top: 30px;
+        }
+        
+        .drawings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .drawing-item {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .drawing-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .drawing-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .drawing-info {
+            padding: 10px;
+        }
+        
+        .drawing-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .drawing-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .achievement-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+        
+        .achievement-card.earned {
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #ffd700;
+        }
+        
+        .achievement-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .achievement-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .achievement-desc {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .empty-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .edit-profile-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .edit-profile-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .settings-list {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .setting-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .setting-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #2ed573;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .profile-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .drawings-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .achievements-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .profile-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .drawings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-tabs {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+        
+        .level-up {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка профиля -->
+        <div class="profile-header">
+            <button class="edit-profile-btn" onclick="editProfile()">
+                ✏️ Редактировать
+            </button>
+            
+            <div class="profile-avatar" id="userAvatar">👤</div>
+            <div class="profile-name" id="userName">Загрузка...</div>
+            <div class="profile-level">Уровень <span id="userLevel">1</span></div>
+            
+            <!-- Прогресс уровня -->
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Опыт до следующего уровня</span>
+                    <span id="progressText">0/100</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%">
+                        <div class="progress-text" id="progressPercent">0%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Основная статистика -->
+            <div class="profile-stats">
+                <div class="stat-card">
+                    <span class="stat-value" id="statBalance">100</span>
+                    <span class="stat-label">💰 Монет</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="statDrawings">0</span>
+                    <span class="stat-label">🎨 Работ</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="statLikes">0</span>
+                    <span class="stat-label">❤️ Лайков</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="statExperience">0</span>
+                    <span class="stat-label">⭐ Опыта</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладки профиля -->
+        <div class="profile-tabs">
+            <div class="tab-btn active" onclick="switchTab('my-works')">Мои работы</div>
+            <div class="tab-btn" onclick="switchTab('achievements')">Достижения</div>
+            <div class="tab-btn" onclick="switchTab('inventory')">Инвентарь</div>
+            <div class="tab-btn" onclick="switchTab('settings')">Настройки</div>
+        </div>
+        
+        <!-- Контент вкладок -->
+        <div id="tab-content">
+            <!-- Вкладка "Мои работы" -->
+            <div class="tab-content active" id="tab-my-works">
+                <div class="my-drawings" id="myDrawingsContainer">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Загружаем ваши работы...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Вкладка "Достижения" -->
+            <div class="tab-content" id="tab-achievements">
+                <div class="achievements-grid" id="achievementsContainer">
+                    <!-- Достижения будут здесь -->
+                </div>
+            </div>
+            
+            <!-- Вкладка "Инвентарь" -->
+            <div class="tab-content" id="tab-inventory">
+                <div id="inventoryContainer">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Загружаем ваш инвентарь...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Вкладка "Настройки" -->
+            <div class="tab-content" id="tab-settings">
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <div>
+                            <strong>🔔 Уведомления</strong>
+                            <p style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">
+                                Получать уведомления о новых лайках и комментариях
+                            </p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notificationsToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <strong>🌙 Темная тема</strong>
+                            <p style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">
+                                Использовать темную тему приложения
+                            </p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="darkModeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item" onclick="showQualitySettings()" style="cursor: pointer;">
+                        <div>
+                            <strong>🎨 Качество рисования</strong>
+                            <p style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">
+                                Настройки качества холста и сохранения
+                            </p>
+                        </div>
+                        <span>⚙️</span>
+                    </div>
+                    
+                    <div class="setting-item" onclick="showPrivacySettings()" style="cursor: pointer;">
+                        <div>
+                            <strong>🔒 Приватность</strong>
+                            <p style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">
+                                Настройки приватности профиля и работ
+                            </p>
+                        </div>
+                        <span>→</span>
+                    </div>
+                    
+                    <div class="setting-item" onclick="clearCache()" style="cursor: pointer;">
+                        <div>
+                            <strong>🗑️ Очистить кэш</strong>
+                            <p style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">
+                                Освободить место на устройстве
+                            </p>
+                        </div>
+                        <span>→</span>
+                    </div>
+                    
+                    <div class="setting-item" onclick="showHelp()" style="cursor: pointer;">
+                        <div>
+                            <strong>❓ Помощь и поддержка</strong>
+                            <p style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">
+                                Частые вопросы и контакты поддержки
+                            </p>
+                        </div>
+                        <span>→</span>
+                    </div>
+                    
+                    <div class="setting-item" onclick="logout()" style="cursor: pointer; color: #ff4757;">
+                        <div>
+                            <strong>🚪 Выйти из аккаунта</strong>
+                            <p style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">
+                                Выйти из текущего аккаунта Telegram
+                            </p>
+                        </div>
+                        <span style="color: #ff4757;">→</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ПЕРЕМЕННЫЕ ====================
+        let userData = {
+            name: 'Пользователь',
+            level: 1,
+            experience: 0,
+            balance: 100,
+            drawings: 0,
+            likes: 0,
+            nextLevelExp: 100
+        };
+        
+        let myDrawings = [];
+        let currentTab = 'my-works';
+        
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        
+        // Инициализируем Telegram Web App
+        function initTelegramApp() {
+            if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                tg.expand();
+                tg.ready();
+                
+                // Устанавливаем тему
+                tg.setBackgroundColor('#667eea');
+                tg.setHeaderColor('#667eea');
+                
+                // Добавляем кнопку "Назад"
+                if (tg.BackButton) {
+                    tg.BackButton.show();
+                    tg.BackButton.onClick(() => {
+                        window.location.href = 'index.html';
+                    });
+                }
+                
+                // Получаем данные пользователя
+                const telegramUser = tg.initDataUnsafe.user;
+                if (telegramUser) {
+                    loadUserProfile(telegramUser.id);
+                    loadMyDrawings(telegramUser.id);
+                } else {
+                    // Для тестирования
+                    updateProfileDisplay();
+                    loadMockDrawings();
+                }
+            } else {
+                // Для тестирования вне Telegram
+                updateProfileDisplay();
+                loadMockDrawings();
+                loadAchievements();
+            }
+        }
+        
+        // ==================== ЗАГРУЗКА ДАННЫХ ====================
+        
+        async function loadUserProfile(userId) {
+            try {
+                const response = await fetch(`/api/get-user/${userId}`);
+                const data = await response.json();
+                
+                if (data) {
+                    userData = {
+                        name: data.full_name || data.username || 'Художник',
+                        level: data.level || 1,
+                        experience: data.experience || 0,
+                        balance: data.balance || 100,
+                        drawings: 0, // Будет загружено отдельно
+                        likes: 0,    // Будет загружено отдельно
+                        nextLevelExp: calculateNextLevelExp(data.level || 1)
+                    };
+                    
+                    // Загружаем количество работ
+                    const drawingsResponse = await fetch(`/api/get-user-drawings/${userId}`);
+                    const drawingsData = await drawingsResponse.json();
+                    
+                    if (drawingsData.drawings) {
+                        userData.drawings = drawingsData.drawings.length;
+                        userData.likes = drawingsData.drawings.reduce((sum, d) => sum + (d.likes || 0), 0);
+                    }
+                    
+                    updateProfileDisplay();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+            }
+        }
+        
+        async function loadMyDrawings(userId) {
+            try {
+                const response = await fetch(`/api/get-user-drawings/${userId}`);
+                const data = await response.json();
+                
+                if (data.drawings && Array.isArray(data.drawings)) {
+                    myDrawings = data.drawings;
+                    renderMyDrawings();
+                } else {
+                    loadMockDrawings();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки работ:', error);
+                loadMockDrawings();
+            }
+        }
+        
+        function loadMockDrawings() {
+            // Заглушка для тестирования
+            myDrawings = [
+                {
+                    id: 1,
+                    title: 'Мой первый рисунок',
+                    url: 'https://via.placeholder.com/400x300/667eea/ffffff?text=Рисунок+1',
+                    likes: 5,
+                    date: '2024-01-20'
+                },
+                {
+                    id: 2,
+                    title: 'Закат в горах',
+                    url: 'https://via.placeholder.com/400x300/764ba2/ffffff?text=Рисунок+2',
+                    likes: 12,
+                    date: '2024-01-19'
+                },
+                {
+                    id: 3,
+                    title: 'Портрет кота',
+                    url: 'https://via.placeholder.com/400x300/ff6b81/ffffff?text=Рисунок+3',
+                    likes: 8,
+                    date: '2024-01-18'
+                }
+            ];
+            
+            userData.drawings = myDrawings.length;
+            userData.likes = myDrawings.reduce((sum, d) => sum + d.likes, 0);
+            
+            updateProfileDisplay();
+            renderMyDrawings();
+        }
+        
+        function loadAchievements() {
+            const achievements = [
+                { id: 1, title: 'Первый шаг', desc: 'Загрузить первую работу', icon: '🎨', earned: true },
+                { id: 2, title: 'Новичок', desc: 'Получить 10 лайков', icon: '❤️', earned: true },
+                { id: 3, title: 'Художник', desc: 'Загрузить 5 работ', icon: '🖌️', earned: false },
+                { id: 4, title: 'Популярный', desc: 'Получить 50 лайков', icon: '⭐', earned: false },
+                { id: 5, title: 'Коллекционер', desc: 'Купить 3 товара', icon: '🛒', earned: false },
+                { id: 6, title: 'Ветеран', desc: 'Достичь 5 уровня', icon: '🏆', earned: false }
+            ];
+            
+            renderAchievements(achievements);
+        }
+        
+        // ==================== РЕНДЕРИНГ ====================
+        
+        function updateProfileDisplay() {
+            // Аватар и имя
+            const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+            if (telegramUser) {
+                document.getElementById('userAvatar').textContent = 
+                    telegramUser.first_name ? telegramUser.first_name[0].toUpperCase() : '👤';
+                document.getElementById('userName').textContent = 
+                    telegramUser.first_name + (telegramUser.last_name ? ' ' + telegramUser.last_name : '');
+            } else {
+                document.getElementById('userAvatar').textContent = '👤';
+                document.getElementById('userName').textContent = userData.name;
+            }
+            
+            // Уровень
+            document.getElementById('userLevel').textContent = userData.level;
+            
+            // Прогресс уровня
+            const progressPercent = Math.min((userData.experience / userData.nextLevelExp) * 100, 100);
+            document.getElementById('progressFill').style.width = `${progressPercent}%`;
+            document.getElementById('progressPercent').textContent = `${Math.round(progressPercent)}%`;
+            document.getElementById('progressText').textContent = 
+                `${userData.experience}/${userData.nextLevelExp}`;
+            
+            // Статистика
+            document.getElementById('statBalance').textContent = userData.balance;
+            document.getElementById('statDrawings').textContent = userData.drawings;
+            document.getElementById('statLikes').textContent = userData.likes;
+            document.getElementById('statExperience').textContent = userData.experience;
+            
+            // Анимация при повышении уровня
+            if (userData.level > 1) {
+                document.getElementById('userLevel').classList.add('level-up');
+                setTimeout(() => {
+                    document.getElementById('userLevel').classList.remove('level-up');
+                }, 2000);
+            }
+        }
+        
+        function renderMyDrawings() {
+            const container = document.getElementById('myDrawingsContainer');
+            
+            if (myDrawings.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎨</div>
+                        <h3>У вас пока нет работ</h3>
+                        <p>Создайте свой первый рисунок!</p>
+                        <a href="draw.html" class="btn" style="margin-top: 20px;">
+                            ✏️ Начать рисовать
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <h3 style="margin-bottom: 15px;">🎨 Мои работы (${myDrawings.length})</h3>
+                <div class="drawings-grid">
+            `;
+            
+            myDrawings.forEach(drawing => {
+                html += `
+                    <div class="drawing-item" onclick="openDrawing(${drawing.id})">
+                        <img src="${drawing.url || drawing.filename}" 
+                             class="drawing-image" 
+                             alt="${drawing.title}"
+                             onerror="this.src='https://via.placeholder.com/400x300/667eea/ffffff?text=Рисунок'">
+                        <div class="drawing-info">
+                            <div class="drawing-title">${drawing.title || 'Без названия'}</div>
+                            <div class="drawing-stats">
+                                <span>❤️ ${drawing.likes || 0}</span>
+                                <span>📅 ${formatDate(drawing.created_at || drawing.date)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function renderAchievements(achievements) {
+            const container = document.getElementById('achievementsContainer');
+            
+            let html = '';
+            achievements.forEach(ach => {
+                html += `
+                    <div class="achievement-card ${ach.earned ? 'earned' : ''}">
+                        <div class="achievement-icon">${ach.icon}</div>
+                        <div class="achievement-title">${ach.title}</div>
+                        <div class="achievement-desc">${ach.desc}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Обновляем активные кнопки вкладок
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Показываем нужный контент
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Загружаем данные для вкладки если нужно
+            if (tabName === 'achievements' && !document.getElementById('achievementsContainer').innerHTML) {
+                loadAchievements();
+            } else if (tabName === 'inventory') {
+                loadInventory();
+            }
+        }
+        
+        // ==================== ФУНКЦИИ ПРОФИЛЯ ====================
+        
+        function editProfile() {
+            const message = `
+✏️ *Редактирование профиля*
+
+В настоящий момент имя и аватарка берутся из вашего аккаунта Telegram.
+
+*Что можно изменить:*
+1. Имя в Telegram настройках
+2. Фотографию профиля в Telegram
+3. Настройки приватности в этом приложении
+
+Для изменений перейдите в настройки Telegram.
+            `;
+            
+            if (window.Telegram?.WebApp?.showAlert) {
+                window.Telegram.WebApp.showAlert(message);
+            } else {
+                alert(message);
+            }
+        }
+        
+        function openDrawing(drawingId) {
+            // Открываем рисунок в галерее
+            window.location.href = `/gallery?drawing=${drawingId}`;
+        }
+        
+        function loadInventory() {
+            const container = document.getElementById('inventoryContainer');
+            
+            // Заглушка для инвентаря
+            const inventory = [
+                { name: 'Кисть "Акварель"', type: 'brush', icon: '🖌️' },
+                { name: 'Золотая рамка', type: 'frame', icon: '🖼️' },
+                { name: 'Кисть "Неон"', type: 'brush', icon: '🌟' }
+            ];
+            
+            let html = `
+                <h3 style="margin-bottom: 15px;">🎒 Мой инвентарь (${inventory.length})</h3>
+                <div class="achievements-grid">
+            `;
+            
+            inventory.forEach(item => {
+                html += `
+                    <div class="achievement-card earned">
+                        <div class="achievement-icon">${item.icon}</div>
+                        <div class="achievement-title">${item.name}</div>
+                        <div class="achievement-desc">${getTypeName(item.type)}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function getTypeName(type) {
+            const names = {
+                'brush': 'Кисть',
+                'background': 'Фон',
+                'frame': 'Рамка',
+                'filter': 'Фильтр'
+            };
+            return names[type] || 'Предмет';
+        }
+        
+        // ==================== НАСТРОЙКИ ====================
+        
+        function showQualitySettings() {
+            const message = `
+🎨 *Настройки качества:*
+
+*Разрешение холста:* Высокое (рекомендуется)
+*Качество сохранения:* 100%
+*Автосохранение:* Включено
+*Формат файлов:* PNG
+
+Для изменения настроек обратитесь в поддержку.
+            `;
+            
+            showAlert(message);
+        }
+        
+        function showPrivacySettings() {
+            const message = `
+🔒 *Настройки приватности:*
+
+*Профиль:* Публичный
+*Работы:* Видны всем
+*Комментарии:* Разрешены
+*Уведомления:* Включены
+
+Изменить настройки можно в разделе "Настройки".
+            `;
+            
+            showAlert(message);
+        }
+        
+        function clearCache() {
+            if (confirm('Очистить кэш приложения? Это освободит место на устройстве.')) {
+                // Заглушка для очистки кэша
+                showAlert('✅ Кэш успешно очищен!');
+            }
+        }
+        
+        function showHelp() {
+            const message = `
+❓ *Помощь и поддержка:*
+
+*Частые вопросы:*
+1. Как сохранить работу?
+   - Нажмите "💾" в редакторе
+
+2. Как получить монеты?
+   - Загружайте работы и получайте лайки
+
+3. Куда пропали мои работы?
+   - Проверьте вкладку "Мои работы"
+
+*Поддержка:* @drawfy_support
+            `;
+            
+            showAlert(message);
+        }
+        
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти из аккаунта?')) {
+                // В Telegram Web App просто закрываем
+                if (window.Telegram?.WebApp?.close) {
+                    window.Telegram.WebApp.close();
+                } else {
+                    alert('Для выхода закройте приложение');
+                }
+            }
+        }
+        
+        function showAlert(message) {
+            if (window.Telegram?.WebApp?.showAlert) {
+                window.Telegram.WebApp.showAlert(message);
+            } else {
+                alert(message);
+            }
+        }
+        
+        // ==================== УТИЛИТЫ ====================
+        
+        function calculateNextLevelExp(level) {
+            // Формула для расчета опыта до следующего уровня
+            return level * 100;
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'Неизвестно';
+            
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            
+            return date.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short'
+            });
+        }
+        
+        // ==================== ЗАПУСК ====================
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            initTelegramApp();
+            
+            // Сохраняем настройки при изменении
+            document.getElementById('notificationsToggle').addEventListener('change', function() {
+                console.log('Уведомления:', this.checked ? 'включены' : 'выключены');
+            });
+            
+            document.getElementById('darkModeToggle').addEventListener('change', function() {
+                console.log('Темная тема:', this.checked ? 'включена' : 'выключена');
+            });
+        });
+    </script>
+</body>
+</html>

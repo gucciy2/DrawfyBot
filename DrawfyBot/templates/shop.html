@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛒 Drawfy - Магазин</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style_local.css">
+    <style>
+        /* Стили для магазина */
+        .shop-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        .balance-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+        
+        .balance-amount {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .shop-categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .category-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .category-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: white;
+        }
+        
+        .category-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .shop-item {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .shop-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .item-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3em;
+        }
+        
+        .item-info {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .item-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+            flex: 1;
+        }
+        
+        .item-price {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .item-description {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            flex: 1;
+        }
+        
+        .item-type {
+            display: inline-block;
+            background: #f1f1f1;
+            color: #666;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-bottom: 15px;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+        
+        .buy-btn {
+            flex: 1;
+            background: #2ed573;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .buy-btn:hover:not(:disabled) {
+            background: #20bf6b;
+            transform: scale(1.05);
+        }
+        
+        .buy-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .preview-btn {
+            background: #3742fa;
+            color: white;
+            border: none;
+            width: 45px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .preview-btn:hover {
+            background: #2f34d1;
+        }
+        
+        .owned-badge {
+            background: #ffd700;
+            color: #333;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .empty-shop {
+            text-align: center;
+            padding: 50px 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .empty-shop-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .currency-info {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        
+        .how-to-earn {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+        }
+        
+        .earn-method {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .earn-icon {
+            font-size: 1.5em;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .earn-details {
+            flex: 1;
+        }
+        
+        .earn-amount {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .preview-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .preview-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .preview-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .preview-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .preview-effect {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .shop-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            
+            .item-actions {
+                flex-direction: column;
+            }
+            
+            .preview-btn {
+                width: 100%;
+                height: 40px;
+                margin-top: 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .shop-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .shop-categories {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+        
+        .special-offer {
+            position: relative;
+            border: 2px solid #ffd700;
+        }
+        
+        .special-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ffd700;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8em;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка магазина -->
+        <div class="shop-header">
+            <h1 style="margin-bottom: 10px;">🛒 Магазин Drawfy</h1>
+            <p>Приобретайте уникальные инструменты и улучшения для вашего творчества!</p>
+            
+            <div class="balance-container">
+                <span>Ваш баланс:</span>
+                <div class="balance-amount" id="userBalance">100 💰</div>
+                <button class="btn" onclick="showEarnCoins()" style="padding: 8px 16px;">
+                    💰 Получить монеты
+                </button>
+            </div>
+        </div>
+        
+        <!-- Категории -->
+        <div class="shop-categories">
+            <div class="category-btn active" onclick="setCategory('all')">Все товары</div>
+            <div class="category-btn" onclick="setCategory('brush')">Кисти</div>
+            <div class="category-btn" onclick="setCategory('background')">Фоны</div>
+            <div class="category-btn" onclick="setCategory('frame')">Рамки</div>
+            <div class="category-btn" onclick="setCategory('filter')">Фильтры</div>
+            <div class="category-btn" onclick="setCategory('bundle')">Наборы</div>
+            <div class="category-btn" onclick="setCategory('owned')">Купленные</div>
+        </div>
+        
+        <!-- Сетка товаров -->
+        <div id="shopContainer">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Загружаем товары...</p>
+            </div>
+        </div>
+        
+        <!-- Информация о валюте -->
+        <div class="currency-info">
+            <h3>💰 Монеты Drawfy</h3>
+            <p>Монеты - это внутренняя валюта приложения, которую можно заработать активностью или приобрести.</p>
+            <p>1 монета = 1 лайк за ваши работы</p>
+        </div>
+        
+        <!-- Как заработать -->
+        <div class="how-to-earn">
+            <h3 style="text-align: center; margin-bottom: 20px;">🎯 Как заработать монеты</h3>
+            
+            <div class="earn-method">
+                <div class="earn-icon">🎨</div>
+                <div class="earn-details">
+                    <strong>Загружайте работы</strong>
+                    <p>+10 монет за каждую новую работу</p>
+                </div>
+                <div class="earn-amount">+10</div>
+            </div>
+            
+            <div class="earn-method">
+                <div class="earn-icon">❤️</div>
+                <div class="earn-details">
+                    <strong>Получайте лайки</strong>
+                    <p>+1 монета за каждый лайк вашим работам</p>
+                </div>
+                <div class="earn-amount">+1</div>
+            </div>
+            
+            <div class="earn-method">
+                <div class="earn-icon">⭐</div>
+                <div class="earn-details">
+                    <strong>Достигайте уровней</strong>
+                    <p>+50 монет за каждый новый уровень</p>
+                </div>
+                <div class="earn-amount">+50</div>
+            </div>
+            
+            <div class="earn-method">
+                <div class="earn-icon">🏆</div>
+                <div class="earn-details">
+                    <strong>Ежедневный бонус</strong>
+                    <p>Зайдите сегодня, чтобы получить награду</p>
+                </div>
+                <button class="btn" onclick="claimDailyBonus()" style="padding: 8px 16px;">
+                    🎁 Получить бонус
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно предпросмотра -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-content">
+            <button class="preview-close" onclick="closePreview()">×</button>
+            <div class="preview-icon" id="previewIcon">🎨</div>
+            <div class="preview-title" id="previewTitle"></div>
+            <div class="preview-description" id="previewDescription"></div>
+            
+            <div class="preview-effect">
+                <strong>Эффект:</strong>
+                <p id="previewEffect"></p>
+            </div>
+            
+            <div style="margin: 20px 0; font-size: 1.2em;">
+                Цена: <span id="previewPrice" style="color: #667eea; font-weight: bold;"></span> монет
+            </div>
+            
+            <button class="buy-btn" id="previewBuyBtn" style="width: 100%; padding: 15px;">
+                Купить сейчас
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ПЕРЕМЕННЫЕ ====================
+        let shopItems = [];
+        let userBalance = 100;
+        let userItems = []; // Купленные товары
+        let currentCategory = 'all';
+        
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        
+        // Инициализируем Telegram Web App
+        function initTelegramApp() {
+            if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                tg.expand();
+                tg.ready();
+                
+                // Устанавливаем тему
+                tg.setBackgroundColor('#667eea');
+                tg.setHeaderColor('#667eea');
+                
+                // Добавляем кнопку "Назад"
+                if (tg.BackButton) {
+                    tg.BackButton.show();
+                    tg.BackButton.onClick(() => {
+                        if (document.getElementById('previewModal').style.display === 'flex') {
+                            closePreview();
+                        } else {
+                            window.location.href = 'index.html';
+                        }
+                    });
+                }
+                
+                // Загружаем данные пользователя
+                const user = tg.initDataUnsafe.user;
+                if (user) {
+                    loadUserData(user.id);
+                }
+            } else {
+                // Для тестирования
+                userBalance = 1000;
+                updateBalanceDisplay();
+            }
+        }
+        
+        // ==================== ЗАГРУЗКА ДАННЫХ ====================
+        
+        async function loadUserData(userId) {
+            try {
+                const response = await fetch(`/api/get-user/${userId}`);
+                const data = await response.json();
+                
+                if (data.balance) {
+                    userBalance = data.balance;
+                    updateBalanceDisplay();
+                }
+                
+                // Загружаем купленные товары (заглушка)
+                userItems = [1, 3]; // ID купленных товаров
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+            }
+        }
+        
+        async function loadShopItems() {
+            try {
+                const response = await fetch('/api/get-shop-items');
+                const data = await response.json();
+                
+                if (data.items && Array.isArray(data.items)) {
+                    shopItems = data.items;
+                    renderShopItems();
+                } else {
+                    // Заглушка для тестирования
+                    shopItems = getMockItems();
+                    renderShopItems();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки товаров:', error);
+                // Заглушка для тестирования
+                shopItems = getMockItems();
+                renderShopItems();
+            }
+        }
+        
+        function getMockItems() {
+            return [
+                {
+                    id: 1,
+                    name: 'Кисть "Акварель"',
+                    description: 'Реалистичная акварельная кисть с эффектом размытия',
+                    price: 100,
+                    type: 'brush',
+                    effect: 'Создает эффект акварельной живописи с мягкими краями'
+                },
+                {
+                    id: 2,
+                    name: 'Кисть "Масло"',
+                    description: 'Текстурная масляная кисть с рельефными мазками',
+                    price: 150,
+                    type: 'brush',
+                    effect: 'Имитирует текстуру масляной краски'
+                },
+                {
+                    id: 3,
+                    name: 'Золотая рамка',
+                    description: 'Элегантная золотая рамка для ваших работ',
+                    price: 200,
+                    type: 'frame',
+                    effect: 'Добавляет роскошную золотую рамку к рисункам'
+                },
+                {
+                    id: 4,
+                    name: 'Фон "Космос"',
+                    description: 'Космический фон с звездами и туманностями',
+                    price: 300,
+                    type: 'background',
+                    effect: 'Фон для космических и фантастических работ'
+                },
+                {
+                    id: 5,
+                    name: 'Аниме-стиль',
+                    description: 'Фильтр для преобразования в аниме-стиль',
+                    price: 250,
+                    type: 'filter',
+                    effect: 'Применяет аниме-фильтр к рисункам'
+                },
+                {
+                    id: 6,
+                    name: 'Профессиональный набор',
+                    description: '10 премиум кистей + 5 эксклюзивных фонов',
+                    price: 1000,
+                    type: 'bundle',
+                    effect: 'Полный набор для профессионального художника'
+                },
+                {
+                    id: 7,
+                    name: 'Неоновая кисть',
+                    description: 'Кисть с неоновым свечением',
+                    price: 180,
+                    type: 'brush',
+                    effect: 'Создает эффект неонового свечения'
+                },
+                {
+                    id: 8,
+                    name: 'Фон "Лес"',
+                    description: 'Живописный лесной пейзаж',
+                    price: 220,
+                    type: 'background',
+                    effect: 'Природный фон для пейзажей'
+                }
+            ];
+        }
+        
+        // ==================== РЕНДЕРИНГ ====================
+        
+        function renderShopItems() {
+            const container = document.getElementById('shopContainer');
+            
+            if (shopItems.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-shop">
+                        <div class="empty-shop-icon">🛒</div>
+                        <h2>Магазин пуст</h2>
+                        <p>Товары скоро появятся!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Фильтруем по категории
+            let filteredItems = shopItems;
+            if (currentCategory !== 'all') {
+                if (currentCategory === 'owned') {
+                    filteredItems = shopItems.filter(item => userItems.includes(item.id));
+                } else {
+                    filteredItems = shopItems.filter(item => item.type === currentCategory);
+                }
+            }
+            
+            let html = '<div class="shop-grid">';
+            
+            filteredItems.forEach(item => {
+                const isOwned = userItems.includes(item.id);
+                const isSpecial = item.id === 6; // Профессиональный набор - специальное предложение
+                
+                html += `
+                    <div class="shop-item ${isSpecial ? 'special-offer' : ''}">
+                        ${isSpecial ? '<div class="special-badge">🔥 ХИТ</div>' : ''}
+                        
+                        <div class="item-image">
+                            ${getItemIcon(item.type)}
+                        </div>
+                        
+                        <div class="item-info">
+                            <div class="item-header">
+                                <div class="item-title">${item.name}</div>
+                                <div class="item-price">${item.price} 💰</div>
+                            </div>
+                            
+                            <div class="item-type">${getTypeName(item.type)}</div>
+                            
+                            <div class="item-description">
+                                ${item.description}
+                            </div>
+                            
+                            ${isOwned ? 
+                                '<div class="owned-badge">✅ Куплено</div>' :
+                                `<div class="item-actions">
+                                    <button class="buy-btn" onclick="buyItem(${item.id})" ${userBalance < item.price ? 'disabled' : ''}>
+                                        Купить
+                                    </button>
+                                    <button class="preview-btn" onclick="previewItem(${item.id})">
+                                        👁️
+                                    </button>
+                                </div>`
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function getItemIcon(type) {
+            const icons = {
+                'brush': '🖌️',
+                'background': '🌄',
+                'frame': '🖼️',
+                'filter': '🎨',
+                'bundle': '🎁'
+            };
+            return icons[type] || '🎨';
+        }
+        
+        function getTypeName(type) {
+            const names = {
+                'brush': 'Кисть',
+                'background': 'Фон',
+                'frame': 'Рамка',
+                'filter': 'Фильтр',
+                'bundle': 'Набор'
+            };
+            return names[type] || 'Товар';
+        }
+        
+        function setCategory(category) {
+            currentCategory = category;
+            
+            // Обновляем активные кнопки категорий
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderShopItems();
+        }
+        
+        // ==================== ПОКУПКИ И ПРЕДПРОСМОТР ====================
+        
+        async function buyItem(itemId) {
+            const item = shopItems.find(i => i.id === itemId);
+            if (!item) return;
+            
+            if (userBalance < item.price) {
+                alert('Недостаточно монет!');
+                return;
+            }
+            
+            if (!confirm(`Купить "${item.name}" за ${item.price} монет?`)) {
+                return;
+            }
+            
+            try {
+                // Отправляем запрос на покупку
+                const response = await fetch('/api/buy-item', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        item_id: itemId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Обновляем баланс
+                    userBalance -= item.price;
+                    updateBalanceDisplay();
+                    
+                    // Добавляем товар в купленные
+                    userItems.push(itemId);
+                    
+                    // Показываем уведомление
+                    showNotification(`✅ "${item.name}" успешно куплен!`);
+                    
+                    // Обновляем отображение
+                    renderShopItems();
+                    closePreview();
+                } else {
+                    alert('Ошибка покупки: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                console.error('Ошибка покупки:', error);
+                alert('Ошибка сети при покупке');
+            }
+        }
+        
+        function previewItem(itemId) {
+            const item = shopItems.find(i => i.id === itemId);
+            if (!item) return;
+            
+            // Заполняем модальное окно
+            document.getElementById('previewIcon').textContent = getItemIcon(item.type);
+            document.getElementById('previewTitle').textContent = item.name;
+            document.getElementById('previewDescription').textContent = item.description;
+            document.getElementById('previewEffect').textContent = item.effect || 'Особый эффект для ваших работ';
+            document.getElementById('previewPrice').textContent = item.price;
+            
+            // Настраиваем кнопку покупки
+            const buyBtn = document.getElementById('previewBuyBtn');
+            const isOwned = userItems.includes(itemId);
+            
+            if (isOwned) {
+                buyBtn.textContent = '✅ Уже куплено';
+                buyBtn.disabled = true;
+                buyBtn.style.background = '#ccc';
+            } else if (userBalance < item.price) {
+                buyBtn.textContent = 'Недостаточно монет';
+                buyBtn.disabled = true;
+                buyBtn.style.background = '#ff4757';
+            } else {
+                buyBtn.textContent = `Купить за ${item.price} монет`;
+                buyBtn.disabled = false;
+                buyBtn.style.background = '#2ed573';
+                buyBtn.onclick = () => buyItem(itemId);
+            }
+            
+            // Показываем модальное окно
+            document.getElementById('previewModal').style.display = 'flex';
+        }
+        
+        function closePreview() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+        
+        // ==================== УТИЛИТЫ ====================
+        
+        function updateBalanceDisplay() {
+            document.getElementById('userBalance').textContent = `${userBalance} 💰`;
+        }
+        
+        function showEarnCoins() {
+            const message = `
+💰 *Как заработать монеты:*
+
+1. *Загружайте работы* - +10 монет за каждую
+2. *Получайте лайки* - +1 монета за каждый лайк
+3. *Повышайте уровень* - +50 монет за уровень
+4. *Ежедневный бонус* - заходите каждый день!
+
+*Совет:* Чем чаще вы рисуете и делитесь работами, тем больше монет зарабатываете!
+            `;
+            
+            if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp && window.Telegram.WebApp.showAlert) {
+                window.Telegram.WebApp.showAlert(message);
+            } else {
+                alert(message);
+            }
+        }
+        
+        function claimDailyBonus() {
+            // Заглушка для ежедневного бонуса
+            const bonus = 50;
+            userBalance += bonus;
+            updateBalanceDisplay();
+            
+            showNotification(`🎁 Вы получили ежедневный бонус: +${bonus} монет!`);
+        }
+        
+        function showNotification(message) {
+            if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp && window.Telegram.WebApp.showAlert) {
+                window.Telegram.WebApp.showAlert(message);
+            } else {
+                alert(message);
+            }
+        }
+        
+        // ==================== ЗАПУСК ====================
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            initTelegramApp();
+            loadShopItems();
+            
+            // Закрываем модальное окно при клике вне его
+            document.getElementById('previewModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('previewModal')) {
+                    closePreview();
+                }
+            });
+            
+            // Закрываем модальное окно при нажатии Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.getElementById('previewModal').style.display === 'flex') {
+                    closePreview();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

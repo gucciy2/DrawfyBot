@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✏️ Drawfy - Рисование</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <style>
+        /* Стили для рисования */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header-title {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.3em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .control-btn.clear {
+            color: #ff4757;
+        }
+        
+        .control-btn.undo {
+            color: #ffa502;
+        }
+        
+        .control-btn.save {
+            color: #2ed573;
+        }
+        
+        .tools-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .tools-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .tool-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tool-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        }
+        
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-btn.active {
+            border-color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        .brush-sizes {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .brush-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .brush-btn.active {
+            background: white;
+            color: #667eea;
+            transform: scale(1.1);
+        }
+        
+        .brush-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .canvas-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        canvas {
+            width: 100%;
+            height: 400px;
+            background: white;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            display: block;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        
+        .save-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .save-panel h3 {
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.4em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s;
+            color: #333;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: white;
+            background: white;
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-success {
+            background: rgba(46, 213, 115, 0.8);
+            color: white;
+            border: 2px solid rgba(46, 213, 115, 0.9);
+        }
+        
+        .btn-success:hover {
+            background: rgba(46, 213, 115, 1);
+            transform: translateY(-2px);
+        }
+        
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 12px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+        }
+        
+        .mode-btn.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            border-color: white;
+        }
+        
+        .mode-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Навигация */
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .nav-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .color-btn {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .brush-btn {
+                width: 35px;
+                height: 35px;
+            }
+            
+            canvas {
+                height: 350px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .control-btn {
+                width: 45px;
+                height: 45px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            canvas {
+                height: 300px;
+            }
+            
+            .tools-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .color-palette {
+                justify-content: center;
+            }
+        }
+        
+        /* Иконки */
+        .icon-large {
+            font-size: 1.8em;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 0.9em;
+            opacity: 0.9;
+            border-left: 4px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Шапка -->
+    <div class="header">
+        <div class="header-title">✏️ Drawfy - Рисование</div>
+        <div class="header-controls">
+            <button class="control-btn undo" onclick="undo()" title="Отменить (Ctrl+Z)">↩️</button>
+            <button class="control-btn clear" onclick="clearCanvas()" title="Очистить холст">🗑️</button>
+            <button class="control-btn save" onclick="showSavePanel()" title="Сохранить работу">💾</button>
+        </div>
+    </div>
+    
+    <!-- Инструкция -->
+    <div class="instructions">
+        <strong>💡 Как рисовать:</strong> Выберите цвет и размер кисти, затем рисуйте на холсте мышкой или пальцем (на телефоне).
+    </div>
+    
+    <!-- Панель инструментов -->
+    <div class="tools-panel">
+        <!-- Режимы рисования -->
+        <div class="mode-selector">
+            <div class="mode-btn active" id="drawMode" onclick="setMode('draw')">
+                <div class="icon-large">✏️</div>
+                <div>Рисование</div>
+            </div>
+            <div class="mode-btn" id="eraseMode" onclick="setMode('erase')">
+                <div class="icon-large">🧽</div>
+                <div>Ластик</div>
+            </div>
+        </div>
+        
+        <!-- Цвета -->
+        <div class="tools-row">
+            <div class="tool-group">
+                <div class="tool-label">🎨 Цвет кисти:</div>
+                <div class="color-palette" id="colorPalette">
+                    <!-- Цвета будут добавлены через JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Кисти -->
+        <div class="tools-row">
+            <div class="tool-group">
+                <div class="tool-label">🖌️ Размер кисти:</div>
+                <div class="brush-sizes">
+                    <div class="brush-btn active" data-size="3" onclick="setBrushSize(3)" title="Тонкая кисть">●</div>
+                    <div class="brush-btn" data-size="7" onclick="setBrushSize(7)" title="Средняя кисть">●</div>
+                    <div class="brush-btn" data-size="12" onclick="setBrushSize(12)" title="Толстая кисть">●</div>
+                    <div class="brush-btn" data-size="20" onclick="setBrushSize(20)" title="Очень толстая кисть">●</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Холст -->
+    <div class="canvas-container">
+        <canvas id="drawingCanvas"></canvas>
+    </div>
+    
+    <!-- Панель сохранения -->
+    <div class="save-panel" id="savePanel">
+        <h3>💾 Сохранить работу</h3>
+        
+        <div class="input-group">
+            <label for="drawingTitle">Название работы:</label>
+            <input type="text" id="drawingTitle" placeholder="Моя картина" maxlength="50">
+        </div>
+        
+        <div class="input-group">
+            <label for="drawingDesc">Описание (необязательно):</label>
+            <textarea id="drawingDesc" placeholder="Расскажите о своей работе..." rows="3" maxlength="200"></textarea>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn btn-secondary" onclick="hideSavePanel()">Отмена</button>
+            <button class="btn btn-success" onclick="saveDrawing()">Сохранить в галерею</button>
+        </div>
+    </div>
+    
+    <!-- Навигация -->
+    <div class="nav-buttons">
+        <a href="index.html" class="nav-btn">🏠 На главную</a>
+        <a href="gallery.html" class="nav-btn">🖼️ В галерею</a>
+        <a href="shop.html" class="nav-btn">🛒 В магазин</a>
+        <a href="profile.html" class="nav-btn">👤 В профиль</a>
+    </div>
+
+    <script>
+        // ==================== ПЕРЕМЕННЫЕ ====================
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Настройки холста
+        canvas.width = canvas.offsetWidth;
+        canvas.height = 400;
+        
+        // Очищаем холст белым цветом
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Переменные для рисования
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentColor = '#000000';
+        let currentBrushSize = 7;
+        let currentMode = 'draw'; // 'draw', 'erase'
+        let drawingHistory = [];
+        let historyIndex = -1;
+        
+        // Цветовая палитра
+        const colors = [
+            '#000000', '#ff0000', '#00ff00', '#0000ff',
+            '#ffff00', '#ff00ff', '#00ffff', '#ffffff',
+            '#ff9500', '#5856d6', '#ff2d55', '#4cd964',
+            '#5ac8fa', '#007aff', '#34aadc', '#ffcc00',
+            '#8e44ad', '#27ae60', '#e74c3c', '#3498db'
+        ];
+        
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        
+        // Инициализируем цветовую палитру
+        function initColorPalette() {
+            const palette = document.getElementById('colorPalette');
+            palette.innerHTML = '';
+            
+            colors.forEach(color => {
+                const colorBtn = document.createElement('div');
+                colorBtn.className = 'color-btn';
+                colorBtn.style.backgroundColor = color;
+                
+                if (color === '#ffffff') {
+                    colorBtn.style.border = '3px solid #cccccc';
+                }
+                
+                if (color === currentColor) {
+                    colorBtn.classList.add('active');
+                }
+                
+                colorBtn.title = color;
+                colorBtn.onclick = () => {
+                    setColor(color);
+                    setMode('draw');
+                };
+                palette.appendChild(colorBtn);
+            });
+        }
+        
+        // Сохраняем состояние в историю
+        function saveState() {
+            // Сохраняем только последние 20 состояний
+            drawingHistory = drawingHistory.slice(0, historyIndex + 1);
+            drawingHistory.push(canvas.toDataURL());
+            historyIndex++;
+            
+            if (drawingHistory.length > 20) {
+                drawingHistory.shift();
+                historyIndex--;
+            }
+        }
+        
+        // ==================== ФУНКЦИИ РИСОВАНИЯ ====================
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+            draw(e); // Начинаем рисовать сразу для точек
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            
+            if (currentMode === 'erase') {
+                ctx.strokeStyle = '#ffffff'; // Ластик = белый цвет
+                ctx.lineWidth = currentBrushSize * 1.5; // Ластик немного больше
+            } else {
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = currentBrushSize;
+            }
+            
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+        
+        function stopDrawing() {
+            if (isDrawing) {
+                saveState();
+            }
+            isDrawing = false;
+        }
+        
+        // ==================== ИНСТРУМЕНТЫ ====================
+        
+        function setColor(color) {
+            currentColor = color;
+            
+            // Обновляем активные кнопки
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.style.backgroundColor === color || 
+                   (color === '#ffffff' && btn.style.backgroundColor === 'rgb(255, 255, 255)')) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Переключаемся в режим рисования
+            setMode('draw');
+        }
+        
+        function setBrushSize(size) {
+            currentBrushSize = size;
+            
+            // Обновляем активные кнопки
+            document.querySelectorAll('.brush-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.getAttribute('data-size')) === size) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // Обновляем активные кнопки
+            document.getElementById('drawMode').classList.toggle('active', mode === 'draw');
+            document.getElementById('eraseMode').classList.toggle('active', mode === 'erase');
+            
+            // Меняем курсор
+            canvas.style.cursor = mode === 'erase' ? 'cell' : 'crosshair';
+        }
+        
+        function clearCanvas() {
+            if (confirm('Очистить весь холст? Весь рисунок будет удален.')) {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                saveState();
+                showMessage('Холст очищен!', 'info');
+            }
+        }
+        
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                const img = new Image();
+                img.onload = function() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = drawingHistory[historyIndex];
+                showMessage('Отменено последнее действие', 'info');
+            } else if (historyIndex === 0) {
+                // Если это первое состояние, очищаем холст
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                historyIndex = -1;
+                drawingHistory = [];
+                showMessage('Отменено всё', 'info');
+            } else {
+                showMessage('Нечего отменять', 'warning');
+            }
+        }
+        
+        // ==================== СОХРАНЕНИЕ ====================
+        
+        function showSavePanel() {
+            document.getElementById('savePanel').style.display = 'block';
+            document.getElementById('drawingTitle').focus();
+        }
+        
+        function hideSavePanel() {
+            document.getElementById('savePanel').style.display = 'none';
+        }
+        
+        function saveDrawing() {
+            const title = document.getElementById('drawingTitle').value.trim();
+            const description = document.getElementById('drawingDesc').value.trim();
+            
+            if (!title) {
+                showMessage('Пожалуйста, введите название работы', 'error');
+                document.getElementById('drawingTitle').focus();
+                return;
+            }
+            
+            // Создаем изображение из canvas
+            const imageData = canvas.toDataURL('image/png');
+            
+            // Показываем сообщение об успехе
+            showMessage(`🎉 Работа "${title}" сохранена!`, 'success');
+            
+            // Сбрасываем форму
+            document.getElementById('drawingTitle').value = '';
+            document.getElementById('drawingDesc').value = '';
+            
+            // Скрываем панель
+            hideSavePanel();
+            
+            // Предлагаем перейти в галерею
+            setTimeout(() => {
+                if (confirm('Хотите перейти в галерею, чтобы посмотреть вашу работу?')) {
+                    window.location.href = 'gallery.html';
+                }
+            }, 1000);
+        }
+        
+        // ==================== УТИЛИТЫ ====================
+        
+        function showMessage(text, type = 'info') {
+            const colors = {
+                'success': '#2ed573',
+                'error': '#ff4757', 
+                'warning': '#ffa502',
+                'info': '#3498db'
+            };
+            
+            // Создаем временное сообщение
+            const message = document.createElement('div');
+            message.textContent = text;
+            message.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                z-index: 1000;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(message);
+            
+            // Удаляем через 3 секунды
+            setTimeout(() => {
+                message.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(message);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Добавляем анимации
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // ==================== СОБЫТИЯ ====================
+        
+        // События мыши
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // События касания (для мобильных)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            startDrawing({
+                offsetX: touch.clientX - rect.left,
+                offsetY: touch.clientY - rect.top
+            });
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            draw({
+                offsetX: touch.clientX - rect.left,
+                offsetY: touch.clientY - rect.top
+            });
+        });
+        
+        canvas.addEventListener('touchend', stopDrawing);
+        
+        // Горячие клавиши
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
+                undo();
+            }
+            if (e.key === 'Delete' || e.key === 'Escape') {
+                clearCanvas();
+            }
+            if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                showSavePanel();
+            }
+        });
+        
+        // Сохраняем начальное состояние
+        saveState();
+        
+        // ==================== ЗАПУСК ====================
+        
+        // Инициализируем при загрузке
+        window.addEventListener('DOMContentLoaded', () => {
+            initColorPalette();
+            showMessage('Добро пожаловать в Drawfy! Выберите цвет и размер кисти, чтобы начать рисовать.', 'info');
+            
+            // Адаптируем размер холста при изменении размера окна
+            window.addEventListener('resize', () => {
+                const tempImage = new Image();
+                tempImage.src = canvas.toDataURL();
+                tempImage.onload = () => {
+                    canvas.width = canvas.offsetWidth;
+                    ctx.drawImage(tempImage, 0, 0, canvas.width, canvas.height);
+                };
+            });
+        });
+    </script>
+</body>
+</html>
